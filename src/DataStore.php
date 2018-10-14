@@ -63,7 +63,7 @@ class DataStore
         return $this->redis->$command($this->redisKeyForQueue($payload['queue_name']));
     }
 
-    public function queueSize(string $queueName): integer
+    public function queueSize(string $queueName): int
     {
         return intval($this->redis->llen($this->redisKeyForQueue($queueName)));
     }

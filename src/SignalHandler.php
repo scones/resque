@@ -6,6 +6,7 @@ namespace Resque;
 
 use Resque\Dispatchers\Noop;
 use Resque\Interfaces\DispatcherInterface;
+use Resque\Tasks\BeforeSignalsRegister;
 
 class SignalHandler
 {
