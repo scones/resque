@@ -63,10 +63,10 @@ class Job
         try {
             $userJob = $this->serviceLocator->get($this->getPayloadClassName());
             $userJob->perform($this->getPayloadArguments());
+            $this->dispatcher->dispatch(AfterUserJobPerform::class, $this->payload);
         } catch (\Exception $e) {
             $this->handleFailedJob();
         }
-        $this->dispatcher->dispatch(AfterUserJobPerform::class, $this->payload);
     }
 
     private function handleFailedJob()
