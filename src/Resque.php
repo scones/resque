@@ -2,34 +2,42 @@
 
 declare(strict_types=1);
 
-use Psr\EventDispatcher\TaskProcessorInterface;
+namespace Resque;
+
+use Resque\Dispatchers\Noop;
+use Resque\Exceptions\JobClassMissing;
+use Resque\Exceptions\QueueMissing;
+use Resque\Interfaces\DispatcherInterface;
 use Resque\Interfaces\SerializerInterface;
+use Resque\Tasks\AfterEnqueue;
+use Resque\Tasks\BeforeEnqueue;
 
 class Resque
 {
     private $dispatcher;
     private $serializer;
+    private $datastore;
 
-    public function __construct(SerializerInterface $serializer)
+    public function __construct(SerializerInterface $serializer, Datastore $datastore)
     {
-        $this->dispatcher = null;
         $this->serializer = $serializer;
+        $this->datastore = $datastore;
+        $this->dispatcher = new Noop();
     }
 
-    public function setDispatcher(TaskProcessorInterface $processor): void
+    public function setDispatcher(DispatcherInterface $dispatcher): void
     {
-        $this->processor = $processor;
+        $this->dispatcher = $dispatcher;
     }
 
     public function enqueue(string $className, array $arguments, string $queueName = ''): void
     {
         $payload = ['class' => $className, 'args' => $arguments];
-        $payload = $this->dispatcher->dispatch(BeforeEnqueueTask::class, $payload);
-
         $this->validateEnqueue($className, $queueName);
-        $this->push($queueName, $payload);
 
-        $this->dispatcher->dispatch(AfterEnqueueTask::class, $payload);
+        $payload = $this->dispatcher->dispatch(BeforeEnqueue::class, $payload);
+        $this->push($queueName, $payload);
+        $this->dispatcher->dispatch(AfterEnqueue::class, $payload);
     }
 
     private function validateEnqueue(string $className, string $queueName): void
@@ -43,8 +51,8 @@ class Resque
         }
     }
 
-    private function push(strng $queueName, array $payload): void
+    private function push(string $queueName, array $payload): void
     {
-        $this->dataStore->pushToQueue($queueName, $this->serializer->serialize($payload));
+        $this->datastore->pushToQueue($queueName, $this->serializer->serialize($payload));
     }
 }
