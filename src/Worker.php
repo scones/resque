@@ -9,6 +9,10 @@ use Psr\Log\LoggerInterface;
 use Resque\Dispatchers\Noop;
 use Resque\Interfaces\DispatcherInterface;
 use Resque\Interfaces\SerializerInterface;
+use Resque\Tasks\WorkerDoneWorking;
+use Resque\Tasks\WorkerRegistering;
+use Resque\Tasks\WorkerStartup;
+use Resque\Tasks\WorkerUnregistering;
 
 class Worker
 {
@@ -21,6 +25,7 @@ class Worker
     private $interval = 10;
     private $shouldShutdown = false;
     private $isPaused = false;
+    private $isChildThread = false;
     private $childId = 0;
     private $serviceLocator;
     private $dispatcher = null;
@@ -77,19 +82,19 @@ class Worker
     {
         $this->signalHandler->setWorker($this);
         $this->signalHandler->register();
-        $this->dispatcher->dispatch(WorkerStartupTask::class, ['worker' => $this]);
+        $this->dispatcher->dispatch(WorkerStartup::class, ['worker' => $this]);
         $this->registerWorker();
     }
 
     private function registerWorker(): void
     {
-        $this->dispatcher->dispatch(WorkerRegisteringTask::class, ['worker' => $this]);
+        $this->dispatcher->dispatch(WorkerRegistering::class, ['worker' => $this]);
         $this->datastore->registerWorker($this->id);
     }
 
     private function unregisterWorker(): void
     {
-        $this->dispatcher->dispatch(WorkerUnregisteringTask::class, ['worker' => $this]);
+        $this->dispatcher->dispatch(WorkerUnregistering::class, ['worker' => $this]);
         $this->datastore->unregisterWorker($this->id);
     }
 
@@ -139,7 +144,7 @@ class Worker
         switch ($this->childId) {
 
             case self::FORK_FAILED:
-                $this->criticalWorkerShutdown();
+                $this->criticalWorkerShutdown($job);
                 break;
 
             case self::FORK_CHILD:
@@ -170,10 +175,21 @@ class Worker
         return $factory($queueName, $payload);
     }
 
-    public function criticalWorkerShutdown(): void
+    public function criticalWorkerShutdown(Job $job): void
     {
-        $job->requeue();
+        $this->requeueJob($job);
         $this->shutdown();
+    }
+
+    private function requeueJob(Job $job): void
+    {
+        $payload = $this->createPayloadFromJob($job);
+        $this->datastore->pushToQueue($job->getQueueName(), $payload);
+    }
+
+    private function createPayloadFromJob($job): string
+    {
+        return $this->serializer->serialize($job->getPayload());
     }
 
     private function performJob(Job $job): void
