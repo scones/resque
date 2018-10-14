@@ -1,0 +1,10 @@
+
+/composer.lock
+/tmp
+!/tmp/gitkeep
+/log
+!/log/gitkeep
+
+/vendor
+
+/async_test.php

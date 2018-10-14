@@ -1,0 +1,40 @@
+{
+    "name": "scones/resque",
+    "license": "github.com/scones/resque/LICENSE",
+    "repositories": [
+        {
+            "type": "git",
+            "url": "https://github.com/php-fig/event-dispatcher.git"
+        }
+    ],
+    "require": {
+        "php": "~7.2",
+        "ext-pcntl": "*",
+        "psr/log": "*@stable",
+        "psr/container": "^1.0",
+        "psr/event-dispatcher": "^0.5.0",
+        "predis/predis": "*@stable"
+    },
+    "suggest": {
+        "scones/nexus": "^0.5.0",
+        "pimple/pimple": "*@stable",
+        "monolog/monolog": "*@stable"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "*@stable",
+        "php-mock/php-mock-phpunit": "*@stable"
+    },
+    "autoload": {
+        "psr-4": {
+            "Resque\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Resque\\Tests\\": "tests/"
+        }
+    },
+    "platform": {
+        "php": "~7.2"
+    }
+}
