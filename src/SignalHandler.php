@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Resque;
 
 use Resque\Dispatchers\Noop;
-use Resque\Dispatchers\PayloadDispatcher;
 
 class SignalHandler
 {

@@ -25,7 +25,6 @@ class Payload implements DispatcherInterface
         $task->setPayload($payload);
         $task = $this->taskProcessor->process($task);
 
-        /** @scrutinizer ignore-call */
-        return $task->getPayload();
+        return $task->/** @scrutinizer ignore-call */getPayload();
     }
 }
