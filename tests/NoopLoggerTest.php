@@ -1,15 +1,14 @@
 <?php
 
 namespace Resque;
-use Resque\NoopLogger;
+
 use PHPUnit\Framework\TestCase;
 
 class NoopLoggerTest extends TestCase
 {
-
     public function setUp()
     {
-        $this->logger = new NoopLogger;
+        $this->logger = new NoopLogger();
         $this->levels = [
             'emergency',
             'alert',
@@ -39,5 +38,4 @@ class NoopLoggerTest extends TestCase
             $this->assertNull($this->logger->log($level, "some {$level} message"), "log method did more than nothing for '{$level}'");
         }
     }
-
 }

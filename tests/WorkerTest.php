@@ -23,20 +23,16 @@ class WorkerTest extends TestCase
         $this->dispatcher = $this->getDispatcherMock();
         $serializer = new JsonSerializer();
         $queueNames = ['test_queue'];
-        $interval = 10;
         $this->worker = new Worker($this->datastore, $serializer, $this->serviceLocator, $this->signalHandler);
         $this->worker->setInterval(0);
         $this->worker->setQueueNames($queueNames);
 
         $this->jobBuilder = $this->getJobMock();
         $this->mockForking();
-
-        uopz_allow_exit(false);
     }
 
     public function tearDown()
     {
-        uopz_allow_exit(true);
     }
 
     public function testWorkerShouldWaitForJobs()
@@ -74,7 +70,7 @@ class WorkerTest extends TestCase
             ->willReturn($this->jobBuilder)
         ;
 
-        $passingJob = new PassingUserJob;
+        $passingJob = new PassingUserJob();
         $this->jobServiceLocator->expects($this->any())
             ->method('get')
             ->with($className)
@@ -166,7 +162,7 @@ class WorkerTest extends TestCase
             ->getMock()
         ;
         $that = $this;
-        return function($className, $arguments) use ($locator, $that) {
+        return function ($className, $arguments) use ($locator, $that) {
             $job = new Job($className, $arguments, $locator);
             $that->job = $job;
             return $job;
