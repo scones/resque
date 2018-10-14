@@ -9,6 +9,7 @@ use Resque\Dispatchers\Noop;
 use Resque\Interfaces\DispatcherInterface;
 use Resque\Tasks\AfterUserJobPerform;
 use Resque\Tasks\BeforeUserJobPerform;
+use Resque\Tasks\FailedUserJobPerform;
 
 class Job
 {

@@ -75,6 +75,7 @@ class Worker
 
     private function startup(): void
     {
+        $this->signalHandler->setWorker($this);
         $this->signalHandler->register();
         $this->dispatcher->dispatch(WorkerStartupTask::class, ['worker' => $this]);
         $this->registerWorker();

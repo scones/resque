@@ -12,11 +12,12 @@
         "ext-pcntl": "*",
         "psr/log": "*@stable",
         "psr/container": "^1.0",
-        "psr/event-dispatcher": "^0.5.0",
+        "psr/event-dispatcher": "^0.6.0",
+        "psr/event-dispatcher-task": "^0.6.0",
         "predis/predis": "*@stable"
     },
     "suggest": {
-        "scones/nexus": "^0.5.0",
+        "scones/nexus": "^0.6.0",
         "pimple/pimple": "*@stable",
         "monolog/monolog": "*@stable"
     },

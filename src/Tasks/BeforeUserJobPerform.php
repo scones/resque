@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Resque\Tasks;
 
-use Psr\EventDispatcher\TaskInterface;
-use Resque\Interfaces\Payloadable as PayloadInterface;
+use Resque\Interfaces\PayloadableTaskInterface;
 use Resque\Traits\Payloadable;
 
-class BeforeUserJobPerform implements PayloadInterface, TaskInterface
+class BeforeUserJobPerform implements PayloadableTaskInterface
 {
     use Payloadable;
 }

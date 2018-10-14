@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Resque;
 
+use Resque\Dispatchers\Noop;
+use Resque\Dispatchers\PayloadDispatcher;
+
 class SignalHandler
 {
-    private $worker;
+    private $worker = null;
     private $dispatcher;
 
     private $signals = [
@@ -18,22 +21,31 @@ class SignalHandler
         SIGUSR2 => 'forceShutdown',
     ];
 
-    public function __construct(Worker $worker, PayloadDispatcher $dispatcher, array $signals = [])
+    public function __construct(array $signals = [])
     {
-        $this->worker = $worker;
-        $this->dispatcher = $dispatcher;
-
         foreach ($signals as $type => $signalCallback) {
             if (in_array($type, array_keys($this->signals)) && is_callable($signalCallback)) {
                 $this->signals[$type] = $signalCallback;
             }
         }
+        $this->dispatcher = new Noop();
+    }
+
+    public function setDispatcher(PayloadDispatcher $dispatcher): void
+    {
+        $this->dispatcher = $dispatcher;
+    }
+
+    public function setWorker(Worker $worker): void
+    {
+        $this->worker = $worker;
     }
 
     public function register(): void
     {
+        $payload = $this->dispatcher->dispatch(BeforeSignalsRegister::class, ['signals' => $this->signals]);
         pcntl_async_signals(true);
-        foreach ($this->signals as $signalType => $signalHandler) {
+        foreach ($payload['signals'] as $signalType => $signalHandler) {
             pcntl_signal($signalType, [$this->worker, $this->$signalHandler]);
         }
 

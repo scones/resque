@@ -7,7 +7,7 @@ namespace Resque\Tasks;
 use Resque\Interfaces\PayloadableTaskInterface;
 use Resque\Traits\Payloadable;
 
-class AfterUserJobPerform implements PayloadableTaskInterface
+class BeforeJobPop implements PayloadableTaskInterface
 {
     use Payloadable;
 }

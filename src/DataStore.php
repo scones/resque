@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Resque;
 
 use Predis\Client;
+use Resque\Dispatchers\Noop;
+use Resque\Interfaces\DispatcherInterface;
 
 class DataStore
 {
@@ -14,11 +16,18 @@ class DataStore
 
     private $redis;
     private $namespace;
+    private $dispatcher;
 
     public function __construct(Client $client, string $resqueNamespace)
     {
         $this->redis = $client;
         $this->namespace = $resqueNamespace;
+        $this->dispatcher = new Noop();
+    }
+
+    public function setDispatcher(DispatcherInterface $dispatcher): void
+    {
+        $this->dispatcher = $dispatcher;
     }
 
     public function allResqueKeys(): array
@@ -33,17 +42,25 @@ class DataStore
 
     public function pushToQueue(string $queueName, string $json): void
     {
-        $redis = $this->redis;
         $queueKey = $this->redisKeyForQueue($queueName);
-        $this->redis->pipeline(function () use ($redis, $queueKey, $json) {
-            $redis->sadd('queues', $queueName);
-            $redis->rpush($queueKey, $json);
-        });
+        $payload = [
+            'queue_key' => $queueKey,
+            'queue_name' => $queueName,
+            'json' => $json,
+            'command' => 'rpush',
+        ];
+        $payload = $this->dispatcher->dispatch(BeforeJobPush::class, $payload);
+        $command = $payload['command'];
+        $this->redis->sadd('queues', $payload['queue_name']);
+        $this->redis->$command($payload['queue_key'], $payload['json']);
     }
 
     public function popFromQueue(string $queueName): string
     {
-        return $this->redis->lpop($this->redisKeyForQueue($queueName));
+        $payload = ['command' => 'lpop', 'queue_name' => $queueName];
+        $payload = $this->dispatcher->dispatch(BeforeJobPop::class, $payload);
+        $command = $payload['command'];
+        return $this->redis->$command($this->redisKeyForQueue($payload['queue_name']));
     }
 
     public function queueSize(string $queueName): integer
