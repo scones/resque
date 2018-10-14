@@ -76,6 +76,8 @@ class Worker
                 sleep($this->interval);
             }
         } while (0 < $this->interval && !$this->shouldShutdown);
+
+        $this->unregisterWorker();
     }
 
     private function startup(): void
