@@ -6,16 +6,16 @@ namespace Resque;
 
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
-use Resque\Tests\Fixtures\FailingUserJob;
-use Resque\Tests\Fixtures\PassingUserJob;
 use Resque\Interfaces\DispatcherInterface;
 use Resque\Tasks\AfterUserJobPerform;
 use Resque\Tasks\BeforeUserJobPerform;
 use Resque\Tasks\FailedUserJobPerform;
-use Resque\Tasks\WorkerStartup;
-use Resque\Tasks\WorkerRegistering;
-use Resque\Tasks\WorkerUnregistering;
 use Resque\Tasks\WorkerDoneWorking;
+use Resque\Tasks\WorkerRegistering;
+use Resque\Tasks\WorkerStartup;
+use Resque\Tasks\WorkerUnregistering;
+use Resque\Tests\Fixtures\FailingUserJob;
+use Resque\Tests\Fixtures\PassingUserJob;
 
 class WorkerTest extends TestCase
 {
@@ -200,6 +200,100 @@ class WorkerTest extends TestCase
         ;
 
         $this->worker->work();
+    }
+
+    public function testWorkShouldRunNormallyWhenUserJobSucceedsInParentProcess()
+    {
+        $className = 'SomeJobClass';
+        $payload = [
+            'class' => $className,
+            'args' => [
+                'some_argument' => 'some value',
+                'some_other_arg' => 123,
+            ]
+        ];
+
+        $this->datastore->expects($this->once())
+            ->method('popFromQueue')
+            ->with('test_queue')
+            ->willReturn(json_encode($payload))
+        ;
+
+        $this->serviceLocator->expects($this->once())
+            ->method('get')
+            ->with(Job::class)
+            ->willReturn($this->jobBuilder)
+        ;
+
+        $failingJob = new FailingUserJob();
+        $this->jobServiceLocator->expects($this->any())
+            ->method('get')
+            ->with($className)
+            ->willReturn($failingJob)
+        ;
+
+        $this->dispatcher->expects($this->exactly(4))
+            ->method('dispatch')
+            ->withConsecutive(
+                [WorkerStartup::class, ['worker' => $this->worker]],
+                [WorkerRegistering::class, ['worker' => $this->worker]],
+                [WorkerDoneWorking::class, ['worker' => $this->worker]],
+                [WorkerUnregistering::class, ['worker' => $this->worker]]
+            )
+        ;
+
+        $this->pcntl_fork->expects($this->once())->willReturn(1);
+
+        $this->worker->work();
+
+        $this->assertFalse($this->job->hasFailed(), "Job has failed, but should not have");
+    }
+
+    public function testWorkShouldRunNormallyWhenUserJobFailsInParentProcess()
+    {
+        $className = 'SomeJobClass';
+        $payload = [
+            'class' => $className,
+            'args' => [
+                'some_argument' => 'some value',
+                'some_other_arg' => 123,
+            ]
+        ];
+
+        $this->datastore->expects($this->once())
+            ->method('popFromQueue')
+            ->with('test_queue')
+            ->willReturn(json_encode($payload))
+        ;
+
+        $this->serviceLocator->expects($this->once())
+            ->method('get')
+            ->with(Job::class)
+            ->willReturn($this->jobBuilder)
+        ;
+
+        $passingJob = new PassingUserJob();
+        $this->jobServiceLocator->expects($this->any())
+            ->method('get')
+            ->with($className)
+            ->willReturn($passingJob)
+        ;
+
+        $this->dispatcher->expects($this->exactly(4))
+            ->method('dispatch')
+            ->withConsecutive(
+                [WorkerStartup::class, ['worker' => $this->worker]],
+                [WorkerRegistering::class, ['worker' => $this->worker]],
+                [WorkerDoneWorking::class, ['worker' => $this->worker]],
+                [WorkerUnregistering::class, ['worker' => $this->worker]]
+            )
+        ;
+
+        $this->pcntl_fork->expects($this->once())->willReturn(1);
+
+        $this->worker->work();
+
+        $this->assertFalse($this->job->hasFailed(), "Job has failed, but should not have");
     }
 
     private function getDatastoreMock()
