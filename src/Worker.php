@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Resque;
 
 use Psr\Container\ContainerInterface;
-use Psr\Log\LoggerInterface;
 use Resque\Dispatchers\Noop;
 use Resque\Interfaces\DispatcherInterface;
 use Resque\Interfaces\SerializerInterface;
@@ -29,7 +28,6 @@ class Worker
     private $childId = 0;
     private $serviceLocator;
     private $dispatcher = null;
-    private $logger = null;
 
     public function __construct(
         Datastore $datastore,
@@ -60,11 +58,6 @@ class Worker
     public function setDispatcher(DispatcherInterface $dispatcher): void
     {
         $this->dispatcher = $dispatcher;
-    }
-
-    public function setLogger(LoggerInterface $logger): void
-    {
-        $this->logger = $logger;
     }
 
     public function work(): void
