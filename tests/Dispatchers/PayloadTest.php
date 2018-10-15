@@ -1,10 +1,10 @@
 <?php
 
 namespace Resque\Dispatchers;
+
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\EventDispatcher\TaskProcessorInterface;
-use Resque\Traits\Payloadable;
 use Resque\Interfaces\PayloadableTaskInterface;
 
 class PayloadTest extends TestCase
