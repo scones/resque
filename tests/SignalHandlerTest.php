@@ -3,6 +3,8 @@
 namespace Resque;
 
 use PHPUnit\Framework\TestCase;
+use Resque\Interfaces\DispatcherInterface;
+use Resque\Tasks\BeforeSignalsRegister;
 
 class SignalHandlerTest extends TestCase
 {
@@ -13,6 +15,7 @@ class SignalHandlerTest extends TestCase
         $this->pcntl_signal = $this->getFunctionMock(__NAMESPACE__, 'pcntl_signal');
         $this->pcntl_async_signals = $this->getFunctionMock(__NAMESPACE__, 'pcntl_async_signals');
         $this->worker = $this->getMockBuilder(Worker::class)->disableOriginalConstructor()->getMock();
+        $this->dispatcher = $this->getDispatcherMock();
     }
 
     public function tearDown()
@@ -23,11 +26,19 @@ class SignalHandlerTest extends TestCase
     {
         $signalHandler = new SignalHandler();
         $signalHandler->setWorker($this->worker);
+        $signalHandler->setDispatcher($this->dispatcher);
         $signalsMap = $this->getCurrentSignalMap($signalHandler);
 
         foreach ($signalsMap as $i => $signal) {
             $this->pcntl_signal->expects($this->at($i))->with($signal[0], $signal[1]);
         }
+
+        $payload = ['signals' => $this->getSignals($signalHandler)];
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with(BeforeSignalsRegister::class, $payload)
+            ->willReturn($payload)
+        ;
 
         $signalHandler->register();
     }
@@ -43,7 +54,15 @@ class SignalHandlerTest extends TestCase
             SIGUSR2 => 'foo6',
         ]);
         $signalHandler->setWorker($this->worker);
+        $signalHandler->setDispatcher($this->dispatcher);
         $signalsMap = $this->getCurrentSignalMap($signalHandler);
+
+        $payload = ['signals' => $this->getSignals($signalHandler)];
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with(BeforeSignalsRegister::class, $payload)
+            ->willReturn($payload)
+        ;
 
         foreach ($signalsMap as $i => $signal) {
             $this->pcntl_signal->expects($this->at($i))->with($signal[0], $signal[1]);
@@ -54,14 +73,28 @@ class SignalHandlerTest extends TestCase
 
     private function getCurrentSignalMap(SignalHandler $signalHandler)
     {
-        $property = new \ReflectionProperty(get_class($signalHandler), 'signals');
-        $property->setAccessible(true);
-        $currentSignals = $property->getValue($signalHandler);
+        $currentSignals = $this->getSignals($signalHandler);
 
         $signalsMap = [];
         foreach ($currentSignals as $signalType => $callbackName) {
             $signalsMap[] = [$signalType, [$this->worker, $callbackName]];
         }
         return $signalsMap;
+    }
+
+    private function getSignals(SignalHandler $signalHandler)
+    {
+        $property = new \ReflectionProperty(get_class($signalHandler), 'signals');
+        $property->setAccessible(true);
+        return $property->getValue($signalHandler);
+    }
+
+    private function getDispatcherMock()
+    {
+        return $this->getMockBuilder(DispatcherInterface::class)
+        ->disableOriginalConstructor()
+        ->setMethods(['dispatch'])
+        ->getMock()
+        ;
     }
 }
