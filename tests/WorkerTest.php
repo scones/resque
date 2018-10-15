@@ -329,6 +329,29 @@ class WorkerTest extends TestCase
         $this->assertTrue($this->getShouldShutdownForWorker(), 'the worker should shutdown after receiving the signal to do so');
     }
 
+    public function testPauseShouldSwitchThePauseIndicator()
+    {
+        $this->assertFalse($this->getIsPausedForWorker(), 'a fresh worker should not pause');
+        $this->worker->pause();
+        $this->assertTrue($this->getIsPausedForWorker(), 'a worker should pause after asked to');
+    }
+
+    public function testContinueShouldUnpauseAWorker()
+    {
+        $this->assertFalse($this->getIsPausedForWorker(), 'a fresh worker should not pause');
+        $this->worker->pause();
+        $this->assertTrue($this->getIsPausedForWorker(), 'a worker should pause after asked to');
+        $this->worker->continue();
+        $this->assertFalse($this->getIsPausedForWorker(), 'a worker should not pause after asked to continue');
+    }
+
+    public function getIsPausedForWorker()
+    {
+        $property = new \ReflectionProperty(get_class($this->worker), 'isPaused');
+        $property->setAccessible(true);
+        return $property->getValue($this->worker);
+    }
+
     public function setChildIdForWorker($id)
     {
         $property = new \ReflectionProperty(get_class($this->worker), 'childId');
