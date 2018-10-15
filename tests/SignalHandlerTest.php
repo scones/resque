@@ -14,6 +14,7 @@ class SignalHandlerTest extends TestCase
     {
         $this->pcntl_signal = $this->getFunctionMock(__NAMESPACE__, 'pcntl_signal');
         $this->pcntl_async_signals = $this->getFunctionMock(__NAMESPACE__, 'pcntl_async_signals');
+        $this->register_shutdown_function = $this->getFunctionMock(__NAMESPACE__, 'register_shutdown_function');
         $this->worker = $this->getMockBuilder(Worker::class)->disableOriginalConstructor()->getMock();
         $this->dispatcher = $this->getDispatcherMock();
     }
@@ -39,6 +40,8 @@ class SignalHandlerTest extends TestCase
             ->with(BeforeSignalsRegister::class, $payload)
             ->willReturn($payload)
         ;
+
+        $this->register_shutdown_function->expects($this->once())->with([$signalHandler, 'unregister']);
 
         $signalHandler->register();
     }
@@ -68,7 +71,16 @@ class SignalHandlerTest extends TestCase
             $this->pcntl_signal->expects($this->at($i))->with($signal[0], $signal[1]);
         }
 
+        $this->register_shutdown_function->expects($this->once())->with([$signalHandler, 'unregister']);
+
         $signalHandler->register();
+    }
+
+    public function testUnregisterShouldTurnOffSignals()
+    {
+        $signalHandler = new SignalHandler();
+        $this->pcntl_async_signals->expects($this->once())->with(false);
+        $signalHandler->unregister();
     }
 
     private function getCurrentSignalMap(SignalHandler $signalHandler)
