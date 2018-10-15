@@ -47,9 +47,14 @@ class SignalHandler
         $payload = $this->dispatcher->dispatch(BeforeSignalsRegister::class, ['signals' => $this->signals]);
         pcntl_async_signals(true);
         foreach ($payload['signals'] as $signalType => $signalHandler) {
-            pcntl_signal($signalType, [$this->worker, $this->$signalHandler]);
+            pcntl_signal($signalType, [$this->worker, $signalHandler]);
         }
 
-        register_shutdown_function([$this, 'unregisterSignalHandlers']);
+        register_shutdown_function([$this, 'unregister']);
+    }
+
+    public function unregister(): void
+    {
+        pcntl_async_signals(false);
     }
 }
