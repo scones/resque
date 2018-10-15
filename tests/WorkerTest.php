@@ -296,6 +296,53 @@ class WorkerTest extends TestCase
         $this->assertFalse($this->job->hasFailed(), "Job has failed, but should not have");
     }
 
+    public function testForceShutdownShouldShutdownTheParentProcessSoftly()
+    {
+        $this->assertFalse($this->getShouldShutdownForWorker(), 'a fresh worker should not shutdown');
+        $this->worker->forceShutdown();
+        $this->assertTrue($this->getShouldShutdownForWorker(), 'the worker should shutdown after receiving the signal to do so');
+    }
+
+    public function testForceShutdownShouldShutdownTheChildProcessHarshly()
+    {
+        $childId = random_int(1, 1 << 16);
+        $this->setChildIdForWorker($childId);
+        $this->posix_kill->expects($this->once())->with($childId, SIGTERM)->willReturn(true);
+        $this->assertFalse($this->getShouldShutdownForWorker(), 'a fresh worker should not shutdown');
+        $this->worker->forceShutdown();
+        $this->assertTrue($this->getShouldShutdownForWorker(), 'the worker should shutdown after receiving the signal to do so');
+    }
+
+    public function testForceShutdownShouldShutdownTheChildProcessAbruptlyWhenHarshDoesNotWork()
+    {
+        $childId = random_int(1, 1 << 16);
+        $this->setChildIdForWorker($childId);
+        $this->posix_kill->expects($this->exactly(2))
+            ->withConsecutive(
+                [$childId, SIGTERM],
+                [$childId, SIGKILL]
+            )
+            ->willReturn(false)
+        ;
+        $this->assertFalse($this->getShouldShutdownForWorker(), 'a fresh worker should not shutdown');
+        $this->worker->forceShutdown();
+        $this->assertTrue($this->getShouldShutdownForWorker(), 'the worker should shutdown after receiving the signal to do so');
+    }
+
+    public function setChildIdForWorker($id)
+    {
+        $property = new \ReflectionProperty(get_class($this->worker), 'childId');
+        $property->setAccessible(true);
+        $property->setValue($this->worker, $id);
+    }
+
+    private function getShouldShutdownForWorker()
+    {
+        $property = new \ReflectionProperty(get_class($this->worker), 'shouldShutdown');
+        $property->setAccessible(true);
+        return $property->getValue($this->worker);
+    }
+
     private function getDatastoreMock()
     {
         return $this->getMockBuilder(Datastore::class)
@@ -354,5 +401,6 @@ class WorkerTest extends TestCase
         $this->pcntl_wait = $this->getFunctionMock(__NAMESPACE__, 'pcntl_wait');
         $this->pcntl_wifexited = $this->getFunctionMock(__NAMESPACE__, 'pcntl_wifexited');
         $this->pcntl_wexitstatus = $this->getFunctionMock(__NAMESPACE__, 'pcntl_wexitstatus');
+        $this->posix_kill = $this->getFunctionMock(__NAMESPACE__, 'posix_kill');
     }
 }
