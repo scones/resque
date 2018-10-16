@@ -128,6 +128,13 @@ class DatastoreTest extends TestCase
         $this->datastore->registerWorker($workerId);
     }
 
+    public function testReconnectShouldDisconnectAndConnectAgain()
+    {
+        $this->redis->expects($this->once())->method('disconnect');
+        $this->redis->expects($this->once())->method('connect');
+        $this->datastore->reconnect();
+    }
+
     private function getRedisMock()
     {
         return $this->getMockBuilder(Client::class)
@@ -144,7 +151,7 @@ class DatastoreTest extends TestCase
                 'set',
                 'del',
                 'disconnect',
-                'reconnect',
+                'connect',
             ])
             ->getMock()
         ;
