@@ -5,6 +5,7 @@ namespace Resque;
 use PHPUnit\Framework\TestCase;
 use Predis\Client;
 use Resque\Interfaces\DispatcherInterface;
+use Resque\Tasks\BeforeJobPop;
 use Resque\Tasks\BeforeJobPush;
 
 class DatastoreTest extends TestCase
@@ -54,6 +55,27 @@ class DatastoreTest extends TestCase
         ;
 
         $this->datastore->pushToQueue($payload['queue_name'], $payload['json']);
+    }
+
+    public function testPopFromQueueShouldDispatchAndPop()
+    {
+        $payload = ['command' => 'lpop', 'queue_name' => 'some_queue'];
+        $modifiedPayload = ['command' => 'rpop', 'queue_name' => 'some_queue'];
+
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with(BeforeJobPop::class, $payload)
+            ->willReturn($modifiedPayload)
+        ;
+
+        $this->redis->expects($this->once())
+            ->method($modifiedPayload['command'])
+            ->with('queue:some_queue')
+            ->willReturn('{"some": "data"}')
+        ;
+
+        $result = $this->datastore->popFromQueue($payload['queue_name']);
+        $this->assertEquals('{"some": "data"}', $result);
     }
 
     private function getRedisMock()

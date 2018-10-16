@@ -17,13 +17,11 @@ class DataStore
     public const REDIS_HEARTBEAT_KEY = "workers:heartbeat";
 
     private $redis;
-    private $namespace;
     private $dispatcher;
 
-    public function __construct(Client $client, string $resqueNamespace)
+    public function __construct(Client $client)
     {
         $this->redis = $client;
-        $this->namespace = $resqueNamespace;
         $this->dispatcher = new Noop();
     }
 
@@ -32,6 +30,7 @@ class DataStore
         $this->dispatcher = $dispatcher;
     }
 
+    /*
     public function allResqueKeys(): array
     {
         return array_map(
@@ -41,6 +40,7 @@ class DataStore
             }
         );
     }
+    */
 
     public function pushToQueue(string $queueName, string $json): void
     {
@@ -65,10 +65,12 @@ class DataStore
         return $this->redis->$command($this->redisKeyForQueue($payload['queue_name']));
     }
 
+    /*
     public function queueSize(string $queueName): int
     {
         return intval($this->redis->llen($this->redisKeyForQueue($queueName)));
     }
+    */
 
     public function redisKeyForQueue(string $queueName): string
     {
@@ -80,15 +82,19 @@ class DataStore
         $this->pushToQueue($json, 'failed');
     }
 
+    /*
     public function getWorkerPayload(string $workerId): string
     {
         return $this->redis->get($this->redisKeyForWorker($workerId));
     }
+    */
 
+    /*
     public function workerExists(string $workerId): bool
     {
         return $this->redis->sismember("workers", $workerId);
     }
+    */
 
     public function registerWorker(string $workerId): void
     {
@@ -117,24 +123,31 @@ class DataStore
         $redis->hdel(DataStore::HEARTBEAT_KEY, $workerId);
     }
 
+    /*
     public function hasWorkerHeartbeat(string $workerId): bool
     {
         $heartbeat = $this->redis->hget(DataStore::HEARTBEAT_KEY, $workerId);
         return !empty($heartbeat) && DateTime::createFromFormat(DataStore::REDIS_DATE_FORMAT, $heartbeat);
     }
+    */
 
+    /*
     public function getWorkerHeartbeat(string $workerId): DateTime
     {
         $heartbeat = $this->redis->hget(DataStore::HEARTBEAT_KEY, $workerId);
         return $this->extractHeartbeatDateTime($heartbeat);
     }
+    */
 
+    /*
     public function getWorkerHeartbeats(): array
     {
         $heartbeats = $this->redis->hgetall(DataStore::HEARTBEAT_KEY);
         return array_map($heartbeats, [$this, 'extractHeartbeatDateTime']);
     }
+    */
 
+    /*
     public function extractHeartbeatDateTime($heartbeat): DateTime
     {
         if (!empty($heartbeat)) {
@@ -144,11 +157,14 @@ class DataStore
         }
         throw new RuntimeException("Invalid Worker Heartbeat");
     }
+    */
 
+    /*
     public function acquirePruningDeadWorkerLock(string $workerId, int $expiry): void
     {
         $this->redis->set(self::REDIS_KEY_FOR_WORKER_PRUNING, 'EX', $expiry, 'NX');
     }
+    */
 
     public function workerStarted(string $workerId): void
     {
@@ -192,30 +208,40 @@ class DataStore
         });
     }
 
+    /*
     public function getStat(string $statName): int
     {
         return $this->redis($this->redisKeyForStats($statName));
     }
+    */
 
+    /*
     public function incrementStat(string $statName, int $by): void
     {
         $this->redis->incrby($this->redisKeyForStats($statName), $by);
     }
+    */
 
+    /*
     public function decrementStat(string $statName, int $by): void
     {
         $this->redis->decrby($this->redisKeyForStats($statName), $by);
     }
+    */
 
+    /*
     public function crearStat(string $statName): void
     {
         $this->redis->del($this->redisKeyForStats($statName));
     }
+    */
 
+    /*
     public function redisKeyForStats(string $statName): string
     {
         return "stats:{$statName}";
     }
+    */
 
     public function reconnect(): void
     {
