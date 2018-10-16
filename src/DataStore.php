@@ -79,7 +79,7 @@ class DataStore
 
     public function pushToFailedQueue(string $json): void
     {
-        $this->pushToQueue($json, 'failed');
+        $this->pushToQueue('failed', $json);
     }
 
     /*

@@ -78,6 +78,40 @@ class DatastoreTest extends TestCase
         $this->assertEquals('{"some": "data"}', $result);
     }
 
+    public function testPushToFailedQueueShouldDispatchAndPush()
+    {
+        $queue_name = 'failed';
+        $payload = [
+            'queue_key' => 'queue:failed',
+            'queue_name' => $queue_name,
+            'json' => '{"data": "value"}',
+            'command' => 'rpush',
+        ];
+        $modifiedPayload = [
+            'queue_key' => 'queue:failed',
+            'queue_name' => $queue_name,
+            'json' => '{"data": "value"}',
+            'command' => 'lpush',
+        ];
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with(BeforeJobPush::class, $payload)
+            ->willReturn($modifiedPayload)
+        ;
+
+        $this->redis->expects($this->once())
+            ->method('sadd')
+            ->with('queues', $modifiedPayload['queue_name'])
+        ;
+
+        $this->redis->expects($this->once())
+            ->method($modifiedPayload['command'])
+            ->with('queue:failed', $modifiedPayload['json'])
+        ;
+
+        $this->datastore->pushToFailedQueue($payload['json']);
+    }
+
     private function getRedisMock()
     {
         return $this->getMockBuilder(Client::class)
