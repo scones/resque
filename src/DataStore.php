@@ -112,13 +112,13 @@ class DataStore
 
     public function removeWorkerHeartbeat(string $workerId): void
     {
-        $redis->hdel(DataStore::HEARTBEAT_KEY, $workerId);
+        $this->redis->hdel(DataStore::REDIS_HEARTBEAT_KEY, $workerId);
     }
 
     /*
     public function hasWorkerHeartbeat(string $workerId): bool
     {
-        $heartbeat = $this->redis->hget(DataStore::HEARTBEAT_KEY, $workerId);
+        $heartbeat = $this->redis->hget(DataStore::REDIS_HEARTBEAT_KEY, $workerId);
         return !empty($heartbeat) && DateTime::createFromFormat(DataStore::REDIS_DATE_FORMAT, $heartbeat);
     }
     */
@@ -126,7 +126,7 @@ class DataStore
     /*
     public function getWorkerHeartbeat(string $workerId): DateTime
     {
-        $heartbeat = $this->redis->hget(DataStore::HEARTBEAT_KEY, $workerId);
+        $heartbeat = $this->redis->hget(DataStore::REDIS_HEARTBEAT_KEY, $workerId);
         return $this->extractHeartbeatDateTime($heartbeat);
     }
     */
@@ -134,7 +134,7 @@ class DataStore
     /*
     public function getWorkerHeartbeats(): array
     {
-        $heartbeats = $this->redis->hgetall(DataStore::HEARTBEAT_KEY);
+        $heartbeats = $this->redis->hgetall(DataStore::REDIS_HEARTBEAT_KEY);
         return array_map($heartbeats, [$this, 'extractHeartbeatDateTime']);
     }
     */

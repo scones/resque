@@ -135,6 +135,18 @@ class DatastoreTest extends TestCase
         $this->datastore->reconnect();
     }
 
+    public function testUnregisterWorkerShouldRemoveDatabaseAnnotations()
+    {
+        $workerId = random_int(1, 1 << 16);
+        $this->redis->expects($this->once())->method('srem')->with('workers', $workerId);
+        $this->redis->expects($this->exactly(2))
+            ->method('del')
+            ->withConsecutive(['worker:' . $workerId], ['worker:' . $workerId . ':started']);
+        $this->redis->expects($this->once())->method('hdel')->with('workers:heartbeat', $workerId);
+
+        $this->datastore->unregisterWorker($workerId);
+    }
+
     private function getRedisMock()
     {
         return $this->getMockBuilder(Client::class)
