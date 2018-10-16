@@ -160,7 +160,7 @@ class DataStore
 
     public function workerStarted(string $workerId): void
     {
-        $startTime = (new DateTime())->format(self::REDIS_DATE_FORMAT);
+        $startTime = (new \DateTime())->format(self::REDIS_DATE_FORMAT);
         $this->redis->set($this->redisKeyForWorkerStartTime($workerId), $startTime);
     }
 

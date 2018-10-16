@@ -112,6 +112,22 @@ class DatastoreTest extends TestCase
         $this->datastore->pushToFailedQueue($payload['json']);
     }
 
+    public function testRegisterWorkerShouldAddWorkerTracking()
+    {
+        $workerId = random_int(1, 1 << 16);
+        $this->redis->expects($this->once())
+            ->method('sadd')
+            ->with('workers', $workerId)
+        ;
+
+        $this->redis->expects($this->once())
+            ->method('set')
+            ->with('worker:' . $workerId . ':started')
+        ;
+
+        $this->datastore->registerWorker($workerId);
+    }
+
     private function getRedisMock()
     {
         return $this->getMockBuilder(Client::class)
@@ -123,14 +139,9 @@ class DatastoreTest extends TestCase
                 'lpop',
                 'rpop',
                 'get',
-                'sismember',
                 'srem',
                 'hdel',
-                'hget',
-                'hgetall',
                 'set',
-                'incrby',
-                'decrby',
                 'del',
                 'disconnect',
                 'reconnect',
