@@ -98,24 +98,16 @@ class DataStore
 
     public function registerWorker(string $workerId): void
     {
-        $redis = $this->redis;
-        $that = $this;
-        $this->redis->pipeline(function () use ($redis, $workerId, $that) {
-            $redis->sadd("workers", $workerId);
-            $that->workerStarted($workerId);
-        });
+        $this->redis->sadd("workers", $workerId);
+        $this->workerStarted($workerId);
     }
 
     public function unregisterWorker(string $workerId): void
     {
-        $redis = $this->redis;
-        $that = $this;
-        $redis->pipeline(function () use ($redis, $workerId, $that) {
-            $redis->srem("workers", $workerId);
-            $redis->del($that->redisKeyForWorker($workerId));
-            $redis->del($that->redisKeyForWorkerStartTime($workerId));
-            $that->removeWorkerHeartbeat($workerId);
-        });
+        $this->redis->srem("workers", $workerId);
+        $this->redis->del($this->redisKeyForWorker($workerId));
+        $this->redis->del($this->redisKeyForWorkerStartTime($workerId));
+        $this->removeWorkerHeartbeat($workerId);
     }
 
     public function removeWorkerHeartbeat(string $workerId): void
@@ -200,12 +192,8 @@ class DataStore
 
     public function workerDoneWorking(string $workerId, callable $block): void
     {
-        $redis = $this->redis;
-        $workerKey = $this->redisKeyForWorker($workerId);
-        $this->redis->pipeline(function () use ($redis, $workerKey, $block) {
-            $redis->del($workerKey);
-            $block();
-        });
+        $this->redis->del($this->redisKeyForWorker($workerId));
+        $block();
     }
 
     /*
