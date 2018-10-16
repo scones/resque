@@ -49,7 +49,7 @@ class WorkerTest extends TestCase
         $this->datastore->expects($this->once())
             ->method('popFromQueue')
             ->with('test_queue')
-            ->willReturn(null)
+            ->willReturn('')
         ;
 
         $this->dispatcher->expects($this->exactly(3))
