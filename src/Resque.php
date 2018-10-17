@@ -18,7 +18,7 @@ class Resque
     private $serializer;
     private $datastore;
 
-    public function __construct(SerializerInterface $serializer, Datastore $datastore)
+    public function __construct(Datastore $datastore, SerializerInterface $serializer)
     {
         $this->serializer = $serializer;
         $this->datastore = $datastore;

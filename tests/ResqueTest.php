@@ -15,7 +15,7 @@ class ResqueTest extends TestCase
     {
         $this->datastore = $this->getDatastoreMock();
         $this->serializer = new JsonSerializer();
-        $this->resque = new Resque($this->serializer, $this->datastore);
+        $this->resque = new Resque($this->datastore, $this->serializer);
 
         $this->dispatcher = $this->getDispatcherMock();
         $this->resque->setDispatcher($this->dispatcher);
