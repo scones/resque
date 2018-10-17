@@ -192,10 +192,9 @@ class DataStore
     }
     */
 
-    public function workerDoneWorking(string $workerId, callable $block): void
+    public function workerDoneWorking(string $workerId): void
     {
         $this->redis->del($this->redisKeyForWorker($workerId));
-        $block();
     }
 
     /*
