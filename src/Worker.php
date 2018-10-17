@@ -39,7 +39,6 @@ class Worker
         $this->serializer = $serializer;
         $this->serviceLocator = $serviceLocator;
         $this->signalHandler = $signalHandler;
-        $this->logger = new NoopLogger();
         $this->dispatcher = new Noop();
 
         $this->id = gethostname() . '-' . getmypid() . md5(random_bytes(2));
@@ -111,8 +110,6 @@ class Worker
         foreach ($this->queueNames as $queueName) {
             $payload = $this->datastore->popFromQueue($queueName);
             if (!empty($payload)) {
-                $this->logger->info('found one job');
-                $this->logger->debug("payload: {$payload}");
                 return $this->createJobFromPayload($queueName, $payload);
             }
         }
