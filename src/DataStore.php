@@ -179,6 +179,7 @@ class DataStore
         $this->redis->set($this->redisKeyForWorker($workerId), $data);
     }
 
+    /*
     public function getWorkerStartTime(string $workerId): DateTime
     {
         $workerStartRedisTime = $this->redis->get($this->redisKeyForWorkerStartTime($workerId));
@@ -189,6 +190,7 @@ class DataStore
         }
         throw new RuntimeException("Invalid Worker Start Time");
     }
+    */
 
     public function workerDoneWorking(string $workerId, callable $block): void
     {
