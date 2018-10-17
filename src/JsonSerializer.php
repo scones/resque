@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Resque;
 
-use Resque\Interfaces\SerializerInterface;
+use Resque\Interfaces\Serializer;
 
-class JsonSerializer implements SerializerInterface
+class JsonSerializer implements Serializer
 {
     public function serialize(array $payload): string
     {

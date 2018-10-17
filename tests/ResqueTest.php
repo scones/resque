@@ -5,7 +5,7 @@ namespace Resque;
 use PHPUnit\Framework\TestCase;
 use Resque\Exceptions\JobClassMissing;
 use Resque\Exceptions\QueueMissing;
-use Resque\Interfaces\DispatcherInterface;
+use Resque\Interfaces\Dispatcher;
 use Resque\Tasks\AfterEnqueue;
 use Resque\Tasks\BeforeEnqueue;
 
@@ -80,7 +80,7 @@ class ResqueTest extends TestCase
 
     private function getDispatcherMock()
     {
-        return $this->getMockBuilder(DispatcherInterface::class)
+        return $this->getMockBuilder(Dispatcher::class)
             ->disableOriginalConstructor()
             ->setMethods(['dispatch'])
             ->getMock()

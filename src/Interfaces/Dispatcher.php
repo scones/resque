@@ -2,7 +2,7 @@
 
 namespace Resque\Interfaces;
 
-interface DispatcherInterface
+interface Dispatcher
 {
     public function dispatch(string $className, array $payload): array;
 }

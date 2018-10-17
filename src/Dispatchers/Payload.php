@@ -6,9 +6,9 @@ namespace Resque\Dispatchers;
 
 use Psr\Container\ContainerInterface;
 use Psr\EventDispatcher\TaskProcessorInterface;
-use Resque\Interfaces\DispatcherInterface;
+use Resque\Interfaces\Dispatcher;
 
-class Payload implements DispatcherInterface
+class Payload implements Dispatcher
 {
     private $taskProcessor;
     private $serviceLocator;

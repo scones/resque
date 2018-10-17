@@ -6,8 +6,8 @@ namespace Resque;
 
 use Psr\Container\ContainerInterface;
 use Resque\Dispatchers\Noop;
-use Resque\Interfaces\DispatcherInterface;
-use Resque\Interfaces\SerializerInterface;
+use Resque\Interfaces\Dispatcher;
+use Resque\Interfaces\Serializer;
 use Resque\Tasks\WorkerDoneWorking;
 use Resque\Tasks\WorkerRegistering;
 use Resque\Tasks\WorkerStartup;
@@ -31,7 +31,7 @@ class Worker
 
     public function __construct(
         Datastore $datastore,
-        SerializerInterface $serializer,
+        Serializer $serializer,
         ContainerInterface $serviceLocator,
         SignalHandler $signalHandler
     ) {
@@ -55,7 +55,7 @@ class Worker
         $this->queueNames = $queueNames;
     }
 
-    public function setDispatcher(DispatcherInterface $dispatcher): void
+    public function setDispatcher(Dispatcher $dispatcher): void
     {
         $this->dispatcher = $dispatcher;
     }

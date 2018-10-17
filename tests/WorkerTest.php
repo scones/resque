@@ -6,7 +6,7 @@ namespace Resque;
 
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
-use Resque\Interfaces\DispatcherInterface;
+use Resque\Interfaces\Dispatcher;
 use Resque\Tasks\AfterUserJobPerform;
 use Resque\Tasks\BeforeUserJobPerform;
 use Resque\Tasks\FailedUserJobPerform;
@@ -395,7 +395,7 @@ class WorkerTest extends TestCase
 
     private function getDispatcherMock()
     {
-        return $this->getMockBuilder(DispatcherInterface::class)
+        return $this->getMockBuilder(Dispatcher::class)
             ->disableOriginalConstructor()
             ->setMethods(['dispatch'])
             ->getMock()

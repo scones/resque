@@ -4,6 +4,6 @@ namespace Resque\Interfaces;
 
 use Psr\EventDispatcher\TaskInterface;
 
-interface PayloadableTaskInterface extends TaskInterface, Payloadable
+interface PayloadableTask extends TaskInterface, Payloadable
 {
 }

@@ -2,9 +2,9 @@
 
 namespace Resque\Dispatchers;
 
-use Resque\Interfaces\DispatcherInterface;
+use Resque\Interfaces\Dispatcher;
 
-class Noop implements DispatcherInterface
+class Noop implements Dispatcher
 {
     public function dispatch(string $className, array $payload): array
     {

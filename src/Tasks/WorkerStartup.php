@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Resque\Tasks;
 
-use Resque\Interfaces\PayloadableTaskInterface;
+use Resque\Interfaces\PayloadableTask;
 use Resque\Traits\Payloadable;
 
-class WorkerStartup implements PayloadableTaskInterface
+class WorkerStartup implements PayloadableTask
 {
     use Payloadable;
 }

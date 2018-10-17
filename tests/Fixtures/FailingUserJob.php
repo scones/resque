@@ -2,9 +2,9 @@
 
 namespace Resque\Tests\Fixtures;
 
-use Resque\Interfaces\JobInterface;
+use Resque\Interfaces\Job;
 
-class FailingUserJob implements JobInterface
+class FailingUserJob implements Job
 {
     public function perform(array $arguments): void
     {

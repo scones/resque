@@ -5,7 +5,7 @@ namespace Resque\Dispatchers;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\EventDispatcher\TaskProcessorInterface;
-use Resque\Interfaces\PayloadableTaskInterface;
+use Resque\Interfaces\PayloadableTask;
 
 class PayloadTest extends TestCase
 {
@@ -73,7 +73,7 @@ class PayloadTest extends TestCase
 
     private function getPayloadableTaskMock()
     {
-        return $this->getMockBuilder(PayloadableTaskInterface::class)
+        return $this->getMockBuilder(PayloadableTask::class)
             ->disableOriginalConstructor()
             ->setMethods(['getPayload', 'setPayload'])
             ->getMock()

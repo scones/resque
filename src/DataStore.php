@@ -6,7 +6,7 @@ namespace Resque;
 
 use Predis\Client;
 use Resque\Dispatchers\Noop;
-use Resque\Interfaces\DispatcherInterface;
+use Resque\Interfaces\Dispatcher;
 use Resque\Tasks\BeforeJobPop;
 use Resque\Tasks\BeforeJobPush;
 
@@ -25,7 +25,7 @@ class DataStore
         $this->dispatcher = new Noop();
     }
 
-    public function setDispatcher(DispatcherInterface $dispatcher): void
+    public function setDispatcher(Dispatcher $dispatcher): void
     {
         $this->dispatcher = $dispatcher;
     }

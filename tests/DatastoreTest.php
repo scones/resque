@@ -4,7 +4,7 @@ namespace Resque;
 
 use PHPUnit\Framework\TestCase;
 use Predis\Client;
-use Resque\Interfaces\DispatcherInterface;
+use Resque\Interfaces\Dispatcher;
 use Resque\Tasks\BeforeJobPop;
 use Resque\Tasks\BeforeJobPush;
 
@@ -194,7 +194,7 @@ class DatastoreTest extends TestCase
 
     private function getDispatcherMock()
     {
-        return $this->getMockBuilder(DispatcherInterface::class)
+        return $this->getMockBuilder(Dispatcher::class)
             ->disableOriginalConstructor()
             ->setMethods(['dispatch'])
             ->getMock()

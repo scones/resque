@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Resque;
 
 use Resque\Dispatchers\Noop;
-use Resque\Interfaces\DispatcherInterface;
+use Resque\Interfaces\Dispatcher;
 use Resque\Tasks\BeforeSignalsRegister;
 
 class SignalHandler
@@ -32,7 +32,7 @@ class SignalHandler
         $this->dispatcher = new Noop();
     }
 
-    public function setDispatcher(DispatcherInterface $dispatcher): void
+    public function setDispatcher(Dispatcher $dispatcher): void
     {
         $this->dispatcher = $dispatcher;
     }
