@@ -147,6 +147,18 @@ class DatastoreTest extends TestCase
         $this->datastore->unregisterWorker($workerId);
     }
 
+    public function testSetWorkerPayloadShouldSetThePayloadInRedis()
+    {
+        $data = 'some data';
+        $workerId = random_int(1, 1 << 16);
+        $this->redis->expects($this->once())
+            ->method('set')
+            ->with('worker:' . $workerId, $data)
+        ;
+
+        $this->datastore->setWorkerPayload($workerId, $data);
+    }
+
     private function getRedisMock()
     {
         return $this->getMockBuilder(Client::class)
