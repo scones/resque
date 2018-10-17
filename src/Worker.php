@@ -167,7 +167,7 @@ class Worker
     {
         $payload = $this->serializer->unserialize($serializedPayload);
         $factory = $this->serviceLocator->get(Job::class);
-        return $factory($queueName, $payload);
+        return $factory($queueName, $payload, $this->serviceLocator);
     }
 
     public function criticalWorkerShutdown(Job $job): void
