@@ -10,7 +10,12 @@ use Resque\Interfaces\Dispatcher;
 use Resque\Tasks\AfterUserJobPerform;
 use Resque\Tasks\BeforeUserJobPerform;
 use Resque\Tasks\FailedUserJobPerform;
+use Resque\Tasks\ForkFailed;
+use Resque\Tasks\JobFailed;
+use Resque\Tasks\ParentWaiting;
+use Resque\Tasks\UnknownChildFailure;
 use Resque\Tasks\WorkerDoneWorking;
+use Resque\Tasks\WorkerIdle;
 use Resque\Tasks\WorkerRegistering;
 use Resque\Tasks\WorkerStartup;
 use Resque\Tasks\WorkerUnregistering;
@@ -36,6 +41,7 @@ class WorkerTest extends TestCase
         $this->worker->setQueueNames($queueNames);
         $this->worker->setDispatcher($this->dispatcher);
 
+        $this->jobHasFailed = false;
         $this->jobBuilder = $this->getJobMock();
         $this->mockForking();
     }
@@ -231,11 +237,11 @@ class WorkerTest extends TestCase
             ->willReturn($this->jobBuilder)
         ;
 
-        $failingJob = new FailingUserJob();
+        $passingJob = new PassingUserJob();
         $this->jobServiceLocator->expects($this->any())
             ->method('get')
             ->with($className)
-            ->willReturn($failingJob)
+            ->willReturn($passingJob)
         ;
 
         $this->dispatcher->expects($this->exactly(5))
@@ -250,13 +256,81 @@ class WorkerTest extends TestCase
         ;
 
         $this->pcntl_fork->expects($this->once())->willReturn(1);
+        $this->pcntl_wait->expects($this->once())->with($this->callback(function ($status) {
+            $this->assertNull($status);
+            return true;
+        }));
+
+        $this->pcntl_wifexited->expects($this->once())->with(0)->willReturn(true);
+        $this->pcntl_wexitstatus->expects($this->once())->with(0)->willReturn(0);
 
         $this->worker->work();
 
         $this->assertFalse($this->job->hasFailed(), "Job has failed, but should not have");
     }
 
-    public function testWorkShouldRunNormallyWhenUserJobFailsInParentProcess()
+    public function testWorkShouldRunNormallyWhenUserJobFailsRegularlyInParentProcess()
+    {
+        $this->jobHasFailed = true;
+        $className = 'SomeJobClass';
+        $payload = [
+            'class' => $className,
+            'args' => [
+                'some_argument' => 'some value',
+                'some_other_arg' => 123,
+            ]
+        ];
+
+        $this->datastore->expects($this->once())
+            ->method('popFromQueue')
+            ->with('test_queue')
+            ->willReturn(json_encode($payload))
+        ;
+
+        $this->serviceLocator->expects($this->once())
+            ->method('get')
+            ->with(Job::class)
+            ->willReturn($this->jobBuilder)
+        ;
+
+        $failingJob = new FailingUserJob();
+        $this->jobServiceLocator->expects($this->any())
+            ->method('get')
+            ->with($className)
+            ->willReturn($failingJob)
+        ;
+
+        $this->dispatcher->expects($this->exactly(6))
+            ->method('dispatch')
+            ->withConsecutive(
+                [WorkerStartup::class, ['worker' => $this->worker]],
+                [WorkerRegistering::class, ['worker' => $this->worker]],
+                [ParentWaiting::class, ['worker' => $this->worker]],
+                [JobFailed::class, $this->callback(function ($payload) {
+                    $this->assertEquals($this->worker, $payload['worker']);
+                    $this->assertInstanceOf(Job::class, $payload['job']);
+                    $this->assertEquals(0, $payload['status']);
+                    $this->assertEquals(0, $payload['exit_code']);
+                    return true;
+                })],
+                [WorkerDoneWorking::class, ['worker' => $this->worker]],
+                [WorkerUnregistering::class, ['worker' => $this->worker]]
+            )
+        ;
+
+        $this->pcntl_fork->expects($this->once())->willReturn(1);
+        $this->pcntl_wait->expects($this->once())->with($this->callback(function ($status) {
+            $this->assertNull($status);
+            return true;
+        }));
+
+        $this->pcntl_wifexited->expects($this->once())->with(0)->willReturn(false);
+        $this->pcntl_wexitstatus->expects($this->never());
+
+        $this->worker->work();
+    }
+
+    public function testWorkShouldStopAndShutdownWhenUserJobFailsIrregularlyInParentProcess()
     {
         $className = 'SomeJobClass';
         $payload = [
@@ -286,22 +360,34 @@ class WorkerTest extends TestCase
             ->willReturn($passingJob)
         ;
 
-        $this->dispatcher->expects($this->exactly(5))
+        $this->dispatcher->expects($this->exactly(6))
             ->method('dispatch')
             ->withConsecutive(
                 [WorkerStartup::class, ['worker' => $this->worker]],
                 [WorkerRegistering::class, ['worker' => $this->worker]],
                 [ParentWaiting::class, ['worker' => $this->worker]],
+                [UnknownChildFailure::class, $this->callback(function ($payload) {
+                    $this->assertEquals($this->worker, $payload['worker']);
+                    $this->assertInstanceOf(Job::class, $payload['job']);
+                    $this->assertEquals(0, $payload['status']);
+                    $this->assertEquals(1, $payload['exit_code']);
+                    return true;
+                })],
                 [WorkerDoneWorking::class, ['worker' => $this->worker]],
                 [WorkerUnregistering::class, ['worker' => $this->worker]]
             )
         ;
 
         $this->pcntl_fork->expects($this->once())->willReturn(1);
+        $this->pcntl_wait->expects($this->once())->with($this->callback(function ($status) {
+            $this->assertNull($status);
+            return true;
+        }));
+
+        $this->pcntl_wifexited->expects($this->once())->with(0)->willReturn(true);
+        $this->pcntl_wexitstatus->expects($this->once())->with(0)->willReturn(1);
 
         $this->worker->work();
-
-        $this->assertFalse($this->job->hasFailed(), "Job has failed, but should not have");
     }
 
     public function testForceShutdownShouldShutdownTheParentProcessSoftly()
@@ -421,6 +507,11 @@ class WorkerTest extends TestCase
         return function ($className, $arguments) use ($locator, $that) {
             $job = new Job($className, $arguments, $locator);
             $job->setDispatcher($that->dispatcher);
+
+            $property = new \ReflectionProperty(Job::class, 'failed');
+            $property->setAccessible(true);
+            $property->setValue($job, $that->jobHasFailed);
+
             $that->job = $job;
             return $job;
         };

@@ -8,7 +8,12 @@ use Psr\Container\ContainerInterface;
 use Resque\Dispatchers\Noop;
 use Resque\Interfaces\Dispatcher;
 use Resque\Interfaces\Serializer;
+use Resque\Tasks\ForkFailed;
+use Resque\Tasks\JobFailed;
+use Resque\Tasks\ParentWaiting;
+use Resque\Tasks\UnknownChildFailure;
 use Resque\Tasks\WorkerDoneWorking;
+use Resque\Tasks\WorkerIdle;
 use Resque\Tasks\WorkerRegistering;
 use Resque\Tasks\WorkerStartup;
 use Resque\Tasks\WorkerUnregistering;
@@ -196,12 +201,14 @@ class Worker
     private function waitForChild(Job $job): void
     {
         $status = null;
+        $exitCode = null;
         pcntl_wait($status);
-        if (!pcntl_wifexited($status) || ($exitStatus = pcntl_wexitstatus($status)) !== 0) {
+        if (!pcntl_wifexited($status) || 0 !== ($exitCode = pcntl_wexitstatus($status))) {
             if ($job->hasFailed()) {
-                // user land job has failed. nothing to be done about that ... except maybe queue in failed queue
+                $this->dispatcher->dispatch(JobFailed::class, ['worker' => $this, 'job' => $job, 'status' => $status, 'exit_code' => $exitCode]);
             } else {
-                // unexpected failure - handle dirty exit
+                $this->dispatcher->dispatch(UnknownChildFailure::class, ['worker' => $this, 'job' => $job, 'status' => $status, 'exit_code' => $exitCode]);
+                $this->shutdown();
             }
         }
     }
