@@ -52,11 +52,12 @@ class WorkerTest extends TestCase
             ->willReturn('')
         ;
 
-        $this->dispatcher->expects($this->exactly(3))
+        $this->dispatcher->expects($this->exactly(4))
             ->method('dispatch')
             ->withConsecutive(
                 [WorkerStartup::class, ['worker' => $this->worker]],
                 [WorkerRegistering::class, ['worker' => $this->worker]],
+                [WorkerIdle::class, ['worker' => $this->worker]],
                 [WorkerUnregistering::class, ['worker' => $this->worker]]
             )
         ;
@@ -189,11 +190,16 @@ class WorkerTest extends TestCase
         ;
         $this->pcntl_fork->expects($this->once())->willReturn(-1);
 
-        $this->dispatcher->expects($this->exactly(4))
+        $this->dispatcher->expects($this->exactly(5))
             ->method('dispatch')
             ->withConsecutive(
                 [WorkerStartup::class, ['worker' => $this->worker]],
                 [WorkerRegistering::class, ['worker' => $this->worker]],
+                [ForkFailed::class, $this->callback(function ($payload) {
+                    $this->assertEquals($this->worker, $payload['worker']);
+                    $this->assertInstanceOf(Job::class, $payload['job']);
+                    return true;
+                })],
                 [WorkerDoneWorking::class, ['worker' => $this->worker]],
                 [WorkerUnregistering::class, ['worker' => $this->worker]]
             )
@@ -232,11 +238,12 @@ class WorkerTest extends TestCase
             ->willReturn($failingJob)
         ;
 
-        $this->dispatcher->expects($this->exactly(4))
+        $this->dispatcher->expects($this->exactly(5))
             ->method('dispatch')
             ->withConsecutive(
                 [WorkerStartup::class, ['worker' => $this->worker]],
                 [WorkerRegistering::class, ['worker' => $this->worker]],
+                [ParentWaiting::class, ['worker' => $this->worker]],
                 [WorkerDoneWorking::class, ['worker' => $this->worker]],
                 [WorkerUnregistering::class, ['worker' => $this->worker]]
             )
@@ -279,11 +286,12 @@ class WorkerTest extends TestCase
             ->willReturn($passingJob)
         ;
 
-        $this->dispatcher->expects($this->exactly(4))
+        $this->dispatcher->expects($this->exactly(5))
             ->method('dispatch')
             ->withConsecutive(
                 [WorkerStartup::class, ['worker' => $this->worker]],
                 [WorkerRegistering::class, ['worker' => $this->worker]],
+                [ParentWaiting::class, ['worker' => $this->worker]],
                 [WorkerDoneWorking::class, ['worker' => $this->worker]],
                 [WorkerUnregistering::class, ['worker' => $this->worker]]
             )

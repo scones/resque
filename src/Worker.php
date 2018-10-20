@@ -65,6 +65,7 @@ class Worker
 
         do {
             if ($this->isPaused || !$this->workOneJob()) {
+                $this->dispatcher->dispatch(WorkerIdle::class, ['worker' => $this]);
                 sleep($this->interval);
             }
         } while (0 < $this->interval && !$this->shouldShutdown);
@@ -136,6 +137,7 @@ class Worker
         switch ($this->childId) {
 
             case self::FORK_FAILED:
+                $this->dispatcher->dispatch(ForkFailed::class, ['worker' => $this, 'job' => $job]);
                 $this->criticalWorkerShutdown($job);
                 break;
 
@@ -146,6 +148,7 @@ class Worker
                 break;
 
             default: // parent case
+                $this->dispatcher->dispatch(ParentWaiting::class, ['worker' => $this]);
                 $this->waitForChild($job);
         }
 
