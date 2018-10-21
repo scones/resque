@@ -141,8 +141,8 @@ class DatastoreTest extends TestCase
         $this->redis->expects($this->once())->method('srem')->with('workers', $workerId);
         $this->redis->expects($this->exactly(2))
             ->method('del')
-            ->withConsecutive(['worker:' . $workerId], ['worker:' . $workerId . ':started']);
-        $this->redis->expects($this->once())->method('hdel')->with('workers:heartbeat', $workerId);
+            ->withConsecutive(['worker:' . $workerId], ['worker:' . $workerId . ':started'])
+        ;
 
         $this->datastore->unregisterWorker($workerId);
     }
