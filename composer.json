@@ -1,10 +1,14 @@
 {
     "name": "scones/resque",
-    "license": "github.com/scones/resque/LICENSE",
-    "repositories": [
+    "type": "library",
+    "homepage": "https://github.com/scones/resque",
+    "license": "MIT",
+    "keywords": ["psr-12", "resque", "queue", "tasks", "task queue", "message queue"],
+    "authors": [
         {
-            "type": "git",
-            "url": "https://github.com/php-fig/event-dispatcher.git"
+            "name": "Dirk Gustke",
+            "email": "code+resque@asm68k.org",
+            "homepage": "https://github.com/scones"
         }
     ],
     "require": {
