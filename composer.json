@@ -1,5 +1,6 @@
 {
     "name": "scones/resque",
+    "description": "resque (for php) is a Redis-backed library for creating background jobs, placing them on multiple queues, and processing them later. compatible to the original http://resque.github.io/",
     "type": "library",
     "homepage": "https://github.com/scones/resque",
     "license": "MIT",
