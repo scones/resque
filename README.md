@@ -39,3 +39,7 @@ The worker is an process running anywhere with access to the same redis database
 
 The worker waits new entries in the configured queues and fetches one, as soon as it's available.
 When this happens, it builds the corresponding class (from the supplied container/servicelocator, see examples) and invokes `perform` with the array provided in enqueue as arguments.
+
+## Examples
+
+Find runnable usage examples under https://github.com/scones/resque-examples
