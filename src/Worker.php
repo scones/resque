@@ -33,6 +33,8 @@ class Worker
     private $childId = 0;
     private $serviceLocator;
     private $dispatcher = null;
+    private $id;
+    private $signalHandler;
 
     public function __construct(
         Datastore $datastore,
