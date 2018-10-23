@@ -42,7 +42,25 @@ class ResqueTest extends TestCase
             ->will($this->onConsecutiveCalls($payload, $payload))
         ;
 
-        $this->resque->enqueue($className, ['foo' => 'bar'], $queueName);
+        $this->resque->enqueue($className, $arguments, $queueName);
+    }
+
+    public function testEnqueueShouldNotEnqueueAJobWhenPayloadPermitsIt()
+    {
+        $queueName = 'some_queue';
+        $className = 'SomeUserJobClass';
+        $arguments = ['foo' => 'bar'];
+        $payload = ['class' => $className, 'args' => $arguments];
+        $processedPayload = ['class' => $className, 'args' => $arguments, 'skip_queue' => true];
+        $this->datastore->expects($this->never())->method('pushToQueue');
+
+        $this->dispatcher->expects($this->exactly(2))
+            ->method('dispatch')
+            ->withConsecutive([BeforeEnqueue::class, $payload], [AfterEnqueue::class, $processedPayload])
+            ->will($this->onConsecutiveCalls($processedPayload, $processedPayload))
+        ;
+
+        $this->resque->enqueue($className, $arguments, $queueName);
     }
 
     public function testEnqueueShouldThrowWhenNoQueueNameIsGiven()
