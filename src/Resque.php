@@ -32,7 +32,7 @@ class Resque
 
     public function enqueue(string $className, array $arguments, string $queueName = ''): void
     {
-        $payload = ['class' => $className, 'args' => $arguments];
+        $payload = ['class' => $className, 'args' => $arguments, 'queue_name' => $queueName];
         $this->validateEnqueue($className, $queueName);
 
         $payload = $this->dispatcher->dispatch(BeforeEnqueue::class, $payload);

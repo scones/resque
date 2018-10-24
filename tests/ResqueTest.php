@@ -30,7 +30,7 @@ class ResqueTest extends TestCase
         $queueName = 'some_queue';
         $className = 'SomeUserJobClass';
         $arguments = ['foo' => 'bar'];
-        $payload = ['class' => $className, 'args' => $arguments];
+        $payload = ['class' => $className, 'args' => $arguments, 'queue_name' => $queueName];
         $this->datastore->expects($this->once())
             ->method('pushToQueue')
             ->with($queueName, $this->serializer->serialize($payload))
@@ -50,7 +50,7 @@ class ResqueTest extends TestCase
         $queueName = 'some_queue';
         $className = 'SomeUserJobClass';
         $arguments = ['foo' => 'bar'];
-        $payload = ['class' => $className, 'args' => $arguments];
+        $payload = ['class' => $className, 'args' => $arguments, 'queue_name' => $queueName];
         $processedPayload = ['class' => $className, 'args' => $arguments, 'skip_queue' => true];
         $this->datastore->expects($this->never())->method('pushToQueue');
 
