@@ -16,6 +16,7 @@ class DataStore
 
     private $redis;
     private $dispatcher;
+    private $namespace = 'resque';
 
     public function __construct(Client $client)
     {
@@ -26,6 +27,11 @@ class DataStore
     public function setDispatcher(Dispatcher $dispatcher): void
     {
         $this->dispatcher = $dispatcher;
+    }
+
+    public function setNamespace(string $namespace): void
+    {
+        $this->namespace = $namespace;
     }
 
     public function pushToQueue(string $queueName, string $json): void
@@ -39,7 +45,7 @@ class DataStore
         ];
         $payload = $this->dispatcher->dispatch(BeforeJobPush::class, $payload);
         $command = $payload['command'];
-        $this->redis->sadd('queues', $payload['queue_name']);
+        $this->redis->sadd("{$this->namespace}:queues", $payload['queue_name']);
         $this->redis->$command($payload['queue_key'], $payload['json']);
     }
 
@@ -53,7 +59,7 @@ class DataStore
 
     public function redisKeyForQueue(string $queueName): string
     {
-        return "queue:{$queueName}";
+        return "{$this->namespace}:queue:{$queueName}";
     }
 
     public function pushToFailedQueue(string $json): void
@@ -63,13 +69,13 @@ class DataStore
 
     public function registerWorker(string $workerId): void
     {
-        $this->redis->sadd("workers", $workerId);
+        $this->redis->sadd("{$this->namespace}:workers", $workerId);
         $this->workerStarted($workerId);
     }
 
     public function unregisterWorker(string $workerId): void
     {
-        $this->redis->srem("workers", $workerId);
+        $this->redis->srem("{$this->namespace}:workers", $workerId);
         $this->redis->del($this->redisKeyForWorker($workerId));
         $this->redis->del($this->redisKeyForWorkerStartTime($workerId));
     }
@@ -82,7 +88,7 @@ class DataStore
 
     public function redisKeyForWorker(string $workerId): string
     {
-        return "worker:{$workerId}";
+        return "{$this->namespace}:worker:{$workerId}";
     }
 
     public function redisKeyForWorkerStartTime(string $workerId): string

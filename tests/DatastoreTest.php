@@ -27,13 +27,13 @@ class DatastoreTest extends TestCase
     {
         $queue_name = 'some_queue';
         $payload = [
-            'queue_key' => 'queue:some_queue',
+            'queue_key' => 'resque:queue:some_queue',
             'queue_name' => $queue_name,
             'json' => '{"data": "value"}',
             'command' => 'rpush',
         ];
         $modifiedPayload = [
-            'queue_key' => 'queue:some_queue',
+            'queue_key' => 'resque:queue:some_queue',
             'queue_name' => $queue_name,
             'json' => '{"data": "value"}',
             'command' => 'lpush',
@@ -46,12 +46,12 @@ class DatastoreTest extends TestCase
 
         $this->redis->expects($this->once())
             ->method('sadd')
-            ->with('queues', $modifiedPayload['queue_name'])
+            ->with('resque:queues', $modifiedPayload['queue_name'])
         ;
 
         $this->redis->expects($this->once())
             ->method($modifiedPayload['command'])
-            ->with('queue:some_queue', $modifiedPayload['json'])
+            ->with('resque:queue:some_queue', $modifiedPayload['json'])
         ;
 
         $this->datastore->pushToQueue($payload['queue_name'], $payload['json']);
@@ -70,7 +70,7 @@ class DatastoreTest extends TestCase
 
         $this->redis->expects($this->once())
             ->method($modifiedPayload['command'])
-            ->with('queue:some_queue')
+            ->with('resque:queue:some_queue')
             ->willReturn('{"some": "data"}')
         ;
 
@@ -82,13 +82,13 @@ class DatastoreTest extends TestCase
     {
         $queue_name = 'failed';
         $payload = [
-            'queue_key' => 'queue:failed',
+            'queue_key' => 'resque:queue:failed',
             'queue_name' => $queue_name,
             'json' => '{"data": "value"}',
             'command' => 'rpush',
         ];
         $modifiedPayload = [
-            'queue_key' => 'queue:failed',
+            'queue_key' => 'resque:queue:failed',
             'queue_name' => $queue_name,
             'json' => '{"data": "value"}',
             'command' => 'lpush',
@@ -101,12 +101,12 @@ class DatastoreTest extends TestCase
 
         $this->redis->expects($this->once())
             ->method('sadd')
-            ->with('queues', $modifiedPayload['queue_name'])
+            ->with('resque:queues', $modifiedPayload['queue_name'])
         ;
 
         $this->redis->expects($this->once())
             ->method($modifiedPayload['command'])
-            ->with('queue:failed', $modifiedPayload['json'])
+            ->with('resque:queue:failed', $modifiedPayload['json'])
         ;
 
         $this->datastore->pushToFailedQueue($payload['json']);
@@ -117,12 +117,12 @@ class DatastoreTest extends TestCase
         $workerId = random_int(1, 1 << 16);
         $this->redis->expects($this->once())
             ->method('sadd')
-            ->with('workers', $workerId)
+            ->with('resque:workers', $workerId)
         ;
 
         $this->redis->expects($this->once())
             ->method('set')
-            ->with('worker:' . $workerId . ':started')
+            ->with('resque:worker:' . $workerId . ':started')
         ;
 
         $this->datastore->registerWorker($workerId);
@@ -138,10 +138,10 @@ class DatastoreTest extends TestCase
     public function testUnregisterWorkerShouldRemoveDatabaseAnnotations()
     {
         $workerId = random_int(1, 1 << 16);
-        $this->redis->expects($this->once())->method('srem')->with('workers', $workerId);
+        $this->redis->expects($this->once())->method('srem')->with('resque:workers', $workerId);
         $this->redis->expects($this->exactly(2))
             ->method('del')
-            ->withConsecutive(['worker:' . $workerId], ['worker:' . $workerId . ':started'])
+            ->withConsecutive(['resque:worker:' . $workerId], ['resque:worker:' . $workerId . ':started'])
         ;
 
         $this->datastore->unregisterWorker($workerId);
@@ -153,7 +153,7 @@ class DatastoreTest extends TestCase
         $workerId = random_int(1, 1 << 16);
         $this->redis->expects($this->once())
             ->method('set')
-            ->with('worker:' . $workerId, $data)
+            ->with('resque:worker:' . $workerId, $data)
         ;
 
         $this->datastore->setWorkerPayload($workerId, $data);
@@ -164,11 +164,24 @@ class DatastoreTest extends TestCase
         $workerId = random_int(1, 1 << 16);
         $this->redis->expects($this->once())
             ->method('del')
-            ->with('worker:' . $workerId)
+            ->with('resque:worker:' . $workerId)
         ;
 
         $this->datastore->workerDoneWorking($workerId);
     }
+
+    public function testSetNamespaceChangesTheResqueKeys()
+    {
+        $this->datastore->setNamespace('some_other_namespace');
+        $workerId = random_int(1, 1 << 16);
+        $this->redis->expects($this->once())
+            ->method('del')
+            ->with('some_other_namespace:worker:' . $workerId)
+        ;
+
+        $this->datastore->workerDoneWorking($workerId);
+    }
+
 
     private function getRedisMock()
     {
