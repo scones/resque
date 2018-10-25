@@ -37,7 +37,7 @@ class Resque
 
         $payload = $this->dispatcher->dispatch(BeforeEnqueue::class, $payload);
         if (empty($payload['skip_queue'])) {
-            $this->push($queueName, $payload);
+            $this->push($payload['queue_name'], $payload);
         }
         $this->dispatcher->dispatch(AfterEnqueue::class, $payload);
     }
