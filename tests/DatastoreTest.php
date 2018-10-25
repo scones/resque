@@ -182,7 +182,6 @@ class DatastoreTest extends TestCase
         $this->datastore->workerDoneWorking($workerId);
     }
 
-
     private function getRedisMock()
     {
         return $this->getMockBuilder(Client::class)
