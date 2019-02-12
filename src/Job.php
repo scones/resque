@@ -6,6 +6,7 @@ namespace Resque;
 
 use Psr\Container\ContainerInterface;
 use Resque\Dispatchers\Noop;
+use Resque\Exceptions\PayloadCorrupt;
 use Resque\Interfaces\Dispatcher;
 use Resque\Tasks\AfterUserJobPerform;
 use Resque\Tasks\BeforeUserJobPerform;
@@ -34,11 +35,17 @@ class Job
 
     public function getPayloadClassName(): string
     {
+        if (empty($this->payload['class'])) {
+            throw new PayloadCorrupt();
+        }
         return $this->payload['class'];
     }
 
     public function getPayloadArguments(): array
     {
+        if (empty($this->payload['args'])) {
+            throw new PayloadCorrupt();
+        }
         return $this->payload['args'];
     }
 
