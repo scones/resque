@@ -78,6 +78,27 @@ class DatastoreTest extends TestCase
         $this->assertEquals('{"some": "data"}', $result);
     }
 
+    public function testPopFromQueueShouldWorkWithNullResponseFromPredis()
+    {
+        $payload = ['command' => 'lpop', 'queue_name' => 'some_queue'];
+        $modifiedPayload = ['command' => 'rpop', 'queue_name' => 'some_queue'];
+
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with(BeforeJobPop::class, $payload)
+            ->willReturn($modifiedPayload)
+        ;
+
+        $this->redis->expects($this->once())
+            ->method($modifiedPayload['command'])
+            ->with('resque:queue:some_queue')
+            ->willReturn(null)
+        ;
+
+        $result = $this->datastore->popFromQueue($payload['queue_name']);
+        $this->assertNull($result);
+    }
+
     public function testPushToFailedQueueShouldDispatchAndPush()
     {
         $queue_name = 'failed';

@@ -49,7 +49,7 @@ class DataStore
         $this->redis->$command($payload['queue_key'], $payload['json']);
     }
 
-    public function popFromQueue(string $queueName): string
+    public function popFromQueue(string $queueName): ?string
     {
         $payload = ['command' => 'lpop', 'queue_name' => $queueName];
         $payload = $this->dispatcher->dispatch(BeforeJobPop::class, $payload);
