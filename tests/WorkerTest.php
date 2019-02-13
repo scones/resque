@@ -19,6 +19,7 @@ use Resque\Tasks\WorkerIdle;
 use Resque\Tasks\WorkerRegistering;
 use Resque\Tasks\WorkerStartup;
 use Resque\Tasks\WorkerUnregistering;
+use Resque\Tests\Fixtures\BreakingUserJob;
 use Resque\Tests\Fixtures\FailingUserJob;
 use Resque\Tests\Fixtures\PassingUserJob;
 
@@ -160,6 +161,50 @@ class WorkerTest extends TestCase
                 [WorkerUnregistering::class, ['worker' => $this->worker]]
             )
         ;
+
+        $this->worker->work();
+
+        $this->assertTrue($this->job->hasFailed(), "Job has not failed, but should have");
+    }
+
+    public function testWorkerShouldPerformFoundJobsAndHandleTheirErrorsInChildProcess()
+    {
+        $className = 'SomeJobClass';
+        $payload = [
+            'class' => $className,
+            'args' => [
+                'some_argument' => 'some value',
+                'some_other_arg' => 123,
+            ]
+        ];
+        $this->datastore->expects($this->once())
+            ->method('popFromQueue')
+            ->with('test_queue')
+            ->willReturn(json_encode($payload))
+        ;
+
+        $this->serviceLocator->expects($this->once())
+            ->method('get')
+            ->with(Job::class)
+            ->willReturn($this->jobBuilder)
+        ;
+
+        $failingJob = new BreakingUserJob();
+        $this->jobServiceLocator->expects($this->any())
+            ->method('get')
+            ->with($className)
+            ->willReturn($failingJob)
+        ;
+
+        $this->dispatcher->expects($this->exactly(5))
+        ->method('dispatch')
+        ->withConsecutive(
+            [WorkerStartup::class, ['worker' => $this->worker]],
+            [WorkerRegistering::class, ['worker' => $this->worker]],
+            [BeforeUserJobPerform::class, $payload],
+            [BrokenUserJobPerform::class, $payload],
+            [WorkerUnregistering::class, ['worker' => $this->worker]]
+        );
 
         $this->worker->work();
 

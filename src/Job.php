@@ -73,6 +73,8 @@ class Job
             $this->dispatcher->dispatch(AfterUserJobPerform::class, $this->payload);
         } catch (\Exception $e) {
             $this->handleFailedJob();
+        } catch (\Error $e) {
+            $this->handleBrokenJob();
         }
     }
 
@@ -80,5 +82,11 @@ class Job
     {
         $this->failed = true;
         $this->dispatcher->dispatch(FailedUserJobPerform::class, $this->payload);
+    }
+
+    private function handleBrokenJob()
+    {
+        $this->failed = true;
+        $this->dispatcher->dispatch(BrokenUserJobPerform::class, $this->payload);
     }
 }
