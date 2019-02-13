@@ -10,6 +10,7 @@ use Resque\Exceptions\PayloadCorrupt;
 use Resque\Interfaces\Dispatcher;
 use Resque\Tasks\AfterUserJobPerform;
 use Resque\Tasks\BeforeUserJobPerform;
+use Resque\Tasks\BrokenUserJobPerform;
 use Resque\Tasks\FailedUserJobPerform;
 
 class Job

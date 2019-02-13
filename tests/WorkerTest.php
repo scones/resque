@@ -9,6 +9,7 @@ use Psr\Container\ContainerInterface;
 use Resque\Interfaces\Dispatcher;
 use Resque\Tasks\AfterUserJobPerform;
 use Resque\Tasks\BeforeUserJobPerform;
+use Resque\Tasks\BrokenUserJobPerform;
 use Resque\Tasks\FailedUserJobPerform;
 use Resque\Tasks\ForkFailed;
 use Resque\Tasks\JobFailed;
