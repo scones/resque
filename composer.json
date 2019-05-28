@@ -12,11 +12,21 @@
             "homepage": "https://github.com/scones"
         }
     ],
+    "repositories": [
+        {
+            "type": "git",
+            "url": "https://github.com/php-fig/event-dispatcher.git"
+        },
+        {
+            "type": "git",
+            "url": "https://github.com/scones/event-dispatcher-task.git"
+        }
+    ],
     "require": {
         "php": "~7.2",
         "ext-pcntl": "*",
         "psr/container": "^1.0",
-        "psr/event-dispatcher": "^0.6.0",
+        "psr/event-dispatcher": "^0.6.0, <1.0.0",
         "psr/event-dispatcher-task": "^0.6.0",
         "predis/predis": "*@stable"
     },
